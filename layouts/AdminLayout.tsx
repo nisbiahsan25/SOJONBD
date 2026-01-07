@@ -32,6 +32,20 @@ const AdminLayout: React.FC<Props> = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
+  // Responsive sidebar handling
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    handleResize(); // Init
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Get current user role object
   const userRole = roles.find(r => r.name === currentUser?.role);
   const isSuperAdmin = currentUser?.role === 'Super Admin';
@@ -79,15 +93,22 @@ const AdminLayout: React.FC<Props> = ({ onLogout }) => {
     setLanguage(language === 'bn' ? 'en' : 'bn');
   };
 
+  const handleTabChange = (name: string) => {
+    setActiveTab(name);
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  };
+
   const renderContent = () => {
     // SECURITY GUARD: Check permission before rendering any view
     if (!hasPermission(activeTab)) {
       return (
-        <div className="p-20 text-center flex flex-col items-center justify-center bg-white rounded-[40px] border-4 border-dashed border-red-50">
+        <div className="p-10 md:p-20 text-center flex flex-col items-center justify-center bg-white rounded-[40px] border-4 border-dashed border-red-50">
           <div className="bg-red-50 p-6 rounded-full text-red-500 mb-6">
-            <Lock size={64} />
+            <Lock size={48} md:size={64} />
           </div>
-          <h2 className="text-3xl font-black text-gray-900 mb-4">অ্যাক্সেস ডিনাইড (Access Denied)</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-4">অ্যাক্সেস ডিনাইড (Access Denied)</h2>
           <p className="text-gray-500 font-bold max-w-md">আপনার পদের জন্য এই ফিচারটি ব্যবহারের অনুমতি নেই। অনুগ্রহ করে সুপার এডমিনের সাথে যোগাযোগ করুন।</p>
           <button 
             onClick={() => setActiveTab('Dashboard')}
@@ -123,20 +144,34 @@ const AdminLayout: React.FC<Props> = ({ onLogout }) => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
+      {/* Sidebar Overlay for Mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar */}
-      <aside className={`bg-dark-green text-white transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'} fixed inset-y-0 left-0 z-50 overflow-y-auto shadow-2xl shadow-dark-green/20`}>
-        <div className="p-6 flex items-center gap-3">
-          <div className="bg-yellow-accent p-1.5 rounded-lg text-dark-green w-10 h-10 flex items-center justify-center overflow-hidden">
-            {cms.logo ? <img src={cms.logo} alt="Logo" className="w-full h-full object-contain" /> : <ShieldCheck size={24} />}
+      <aside className={`bg-dark-green text-white transition-all duration-300 ${sidebarOpen ? 'w-64 translate-x-0' : 'w-20 -translate-x-full lg:translate-x-0'} fixed inset-y-0 left-0 z-50 overflow-y-auto shadow-2xl shadow-dark-green/20`}>
+        <div className="p-6 flex items-center justify-between lg:justify-start gap-3 border-b border-emerald-800/50 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-yellow-accent p-1.5 rounded-lg text-dark-green w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
+              {cms.logo ? <img src={cms.logo} alt="Logo" className="w-full h-full object-contain" /> : <ShieldCheck size={24} />}
+            </div>
+            {sidebarOpen && <span className="text-xl font-bold tracking-tight uppercase truncate">সজন এডমিন</span>}
           </div>
-          {sidebarOpen && <span className="text-xl font-bold tracking-tight uppercase">সজন এডমিন</span>}
+          {/* Close button for mobile */}
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-emerald-800 rounded-lg">
+             <X size={24} />
+          </button>
         </div>
 
-        <nav className="mt-4 px-4 space-y-1 pb-10">
+        <nav className="mt-2 px-4 space-y-1 pb-10">
           {filteredMenuItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => setActiveTab(item.name)}
+              onClick={() => handleTabChange(item.name)}
               className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${activeTab === item.name ? 'bg-yellow-accent text-dark-green font-semibold shadow-lg' : 'hover:bg-emerald-800 text-emerald-100'}`}
             >
               <div className="shrink-0">{item.icon}</div>
@@ -150,7 +185,7 @@ const AdminLayout: React.FC<Props> = ({ onLogout }) => {
               {filteredSystemItems.map((item) => (
                 <button
                   key={item.name}
-                  onClick={() => setActiveTab(item.name)}
+                  onClick={() => handleTabChange(item.name)}
                   className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${activeTab === item.name ? 'bg-yellow-accent text-dark-green font-semibold shadow-lg' : 'hover:bg-emerald-800 text-emerald-100'}`}
                 >
                   <div className="shrink-0">{item.icon}</div>
@@ -171,33 +206,33 @@ const AdminLayout: React.FC<Props> = ({ onLogout }) => {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} ml-0`}>
         {/* Header */}
-        <header className="bg-white shadow-sm h-16 sticky top-0 z-40 flex items-center justify-between px-8">
-          <div className="flex items-center gap-4">
+        <header className="bg-white shadow-sm h-16 sticky top-0 z-40 flex items-center justify-between px-4 md:px-8">
+          <div className="flex items-center gap-2 md:gap-4">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
               {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <button 
               onClick={toggleLanguage}
-              className="flex items-center gap-2 px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-full hover:bg-emerald-50 hover:border-emerald-200 transition-all text-sm font-bold text-dark-green"
+              className="flex items-center gap-2 px-3 md:px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-full hover:bg-emerald-50 hover:border-emerald-200 transition-all text-[10px] md:text-sm font-bold text-dark-green"
             >
-              <Languages size={16} /> {t('switchLang')}
+              <Languages size={14} md:size={16} /> <span className="hidden sm:inline">{t('switchLang')}</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 md:gap-6">
             {/* ROLE SWITCHER: ONLY VISIBLE TO SUPER ADMIN */}
             <div className="relative">
               <button 
                 onClick={() => isSuperAdmin && setShowRoleSwitcher(!showRoleSwitcher)}
-                className={`flex items-center gap-3 border border-gray-100 bg-gray-50 px-4 py-1.5 rounded-full hover:bg-gray-100 transition-all ${!isSuperAdmin && 'cursor-default'}`}
+                className={`flex items-center gap-2 md:gap-3 border border-gray-100 bg-gray-50 px-3 md:px-4 py-1.5 rounded-full hover:bg-gray-100 transition-all ${!isSuperAdmin && 'cursor-default'}`}
               >
-                <div className="text-right hidden sm:block">
+                <div className="text-right hidden lg:block">
                   <p className="text-xs font-black text-gray-900 leading-tight">{currentUser?.name}</p>
                   <p className="text-[9px] font-black text-emerald-600 uppercase tracking-tight">{currentUser?.role}</p>
                 </div>
-                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-dark-green border-2 border-white shadow-sm overflow-hidden">
+                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-dark-green border-2 border-white shadow-sm overflow-hidden shrink-0">
                   <User size={16} />
                 </div>
                 {isSuperAdmin && <ChevronDown size={14} className={`text-gray-400 transition-transform ${showRoleSwitcher ? 'rotate-180' : ''}`} />}
@@ -205,7 +240,7 @@ const AdminLayout: React.FC<Props> = ({ onLogout }) => {
               
               {isSuperAdmin && showRoleSwitcher && (
                 <div className="absolute right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 py-4 z-50 animate-in slide-in-from-top-2 duration-200">
-                   <p className="px-6 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-2">Switch Account (Super Admin Only)</p>
+                   <p className="px-6 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-2">Switch Account</p>
                    {systemUsers.map(u => (
                      <button 
                       key={u.id}
@@ -231,12 +266,14 @@ const AdminLayout: React.FC<Props> = ({ onLogout }) => {
         </header>
 
         {/* View Rendering */}
-        <div className="p-8">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">{currentLabel}</h2>
-            <p className="text-gray-500 mt-1">Management and Monitoring Panel</p>
+        <div className="p-4 md:p-8">
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{currentLabel}</h2>
+            <p className="text-xs md:text-sm text-gray-500 mt-1 uppercase font-bold tracking-widest opacity-60">Management Panel</p>
           </div>
-          {renderContent()}
+          <div className="animate-in fade-in duration-500">
+            {renderContent()}
+          </div>
         </div>
       </main>
     </div>
