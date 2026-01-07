@@ -1,0 +1,7 @@
+{
+  "name": " সজন মাদকাশক্তি পুনর্বাশন কেন্দ্র ",
+  "description": "A high-performance rehab management system and public portal with integrated CRM, CMS, and analytics.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
