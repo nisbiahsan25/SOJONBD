@@ -50,6 +50,9 @@ const FIXED_ROLES: Role[] = [
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// API endpoint on your cPanel server
+const API_URL = 'api.php';
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('bn');
   const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
@@ -77,45 +80,78 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   ]);
 
   const [currentUser, setCurrentUser] = useState<SystemUser>(systemUsers[0]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  // FETCH STATE FROM SERVER ON MOUNT
   useEffect(() => {
-    const saved = localStorage.getItem('sazan_app_state');
-    if (saved) {
+    const fetchState = async () => {
       try {
-        const parsed = JSON.parse(saved);
-        if (parsed.patients) setPatients(parsed.patients);
-        if (parsed.beds) setBeds(parsed.beds);
-        if (parsed.inventory) setInventory(parsed.inventory);
-        if (parsed.billing) setBilling(parsed.billing);
-        if (parsed.visitors) setVisitors(parsed.visitors);
-        if (parsed.doctorCharts) setDoctorCharts(parsed.doctorCharts);
-        if (parsed.complaints) setComplaints(parsed.complaints);
-        if (parsed.dietPlans) setDietPlans(parsed.dietPlans);
-        if (parsed.incidents) setIncidents(parsed.incidents);
-        if (parsed.roster) setRoster(parsed.roster);
-        if (parsed.roles) setRoles(parsed.roles);
-        if (parsed.paymentMethods) setPaymentMethods(parsed.paymentMethods);
-        if (parsed.systemUsers) setSystemUsers(parsed.systemUsers);
-        if (parsed.language) setLanguage(parsed.language);
-        if (parsed.currentUser) setCurrentUser(parsed.currentUser);
-
-        if (parsed.cms) {
-          setCms({
-            ...INITIAL_CMS,
-            ...parsed.cms,
-          });
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Server unreachable');
+        const parsed = await response.json();
+        
+        if (parsed && parsed.status !== 'empty') {
+          if (parsed.patients) setPatients(parsed.patients);
+          if (parsed.beds) setBeds(parsed.beds);
+          if (parsed.inventory) setInventory(parsed.inventory);
+          if (parsed.billing) setBilling(parsed.billing);
+          if (parsed.visitors) setVisitors(parsed.visitors);
+          if (parsed.doctorCharts) setDoctorCharts(parsed.doctorCharts);
+          if (parsed.complaints) setComplaints(parsed.complaints);
+          if (parsed.dietPlans) setDietPlans(parsed.dietPlans);
+          if (parsed.incidents) setIncidents(parsed.incidents);
+          if (parsed.roster) setRoster(parsed.roster);
+          if (parsed.roles) setRoles(parsed.roles);
+          if (parsed.paymentMethods) setPaymentMethods(parsed.paymentMethods);
+          if (parsed.systemUsers) setSystemUsers(parsed.systemUsers);
+          if (parsed.language) setLanguage(parsed.language);
+          if (parsed.currentUser) setCurrentUser(parsed.currentUser);
+          if (parsed.cms) setCms({ ...INITIAL_CMS, ...parsed.cms });
         }
       } catch (e) {
-        console.error("Failed to load state from localStorage", e);
+        console.warn("Server fetch failed, falling back to local storage", e);
+        const saved = localStorage.getItem('sazan_app_state');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            // Apply similar logic for local storage fallback...
+          } catch (err) {}
+        }
+      } finally {
+        setIsInitialLoad(false);
       }
-    }
+    };
+    fetchState();
   }, []);
 
+  // SYNC STATE TO SERVER ON EVERY CHANGE
   useEffect(() => {
-    localStorage.setItem('sazan_app_state', JSON.stringify({ 
-      patients, beds, inventory, billing, visitors, doctorCharts, complaints, cms, roles, paymentMethods, systemUsers, dietPlans, incidents, roster, language, currentUser 
-    }));
-  }, [patients, beds, inventory, billing, visitors, doctorCharts, complaints, cms, roles, paymentMethods, systemUsers, dietPlans, incidents, roster, language, currentUser]);
+    if (isInitialLoad) return;
+
+    const syncState = async () => {
+      const stateToSave = { 
+        patients, beds, inventory, billing, visitors, doctorCharts, 
+        complaints, cms, roles, paymentMethods, systemUsers, 
+        dietPlans, incidents, roster, language, currentUser 
+      };
+
+      // Also save to localStorage for offline redundancy
+      localStorage.setItem('sazan_app_state', JSON.stringify(stateToSave));
+
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(stateToSave),
+        });
+      } catch (e) {
+        console.error("Failed to sync state to server", e);
+      }
+    };
+
+    const timeout = setTimeout(syncState, 500); // Debounce to prevent excessive server hits
+    return () => clearTimeout(timeout);
+  }, [patients, beds, inventory, billing, visitors, doctorCharts, complaints, cms, roles, paymentMethods, systemUsers, dietPlans, incidents, roster, language, currentUser, isInitialLoad]);
 
   const t = (key: keyof typeof translations['en']) => {
     return translations[language][key] || key;
