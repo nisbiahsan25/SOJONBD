@@ -48,7 +48,7 @@ const Billing: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex-1 flex items-center justify-between group hover:border-dark-green transition-all">
           <div>
             <p className="text-[10px] text-gray-400 mb-1 font-black uppercase tracking-wider">Total Revenue</p>
-            <p className="text-3xl font-black text-dark-green">${billing.reduce((a, b) => a + b.paid, 0).toLocaleString()}</p>
+            <p className="text-3xl font-black text-dark-green">৳ {billing.reduce((a, b) => a + b.paid, 0).toLocaleString()}</p>
           </div>
           <div className="bg-emerald-100 p-4 rounded-2xl text-dark-green group-hover:bg-dark-green group-hover:text-white transition-all">
             <CreditCard size={32} />
@@ -57,7 +57,7 @@ const Billing: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex-1 flex items-center justify-between group hover:border-orange-500 transition-all">
           <div>
             <p className="text-[10px] text-gray-400 mb-1 font-black uppercase tracking-wider">Total Pending</p>
-            <p className="text-3xl font-black text-orange-600">${billing.reduce((a, b) => a + (b.fee - b.paid), 0).toLocaleString()}</p>
+            <p className="text-3xl font-black text-orange-600">৳ {billing.reduce((a, b) => a + (b.fee - b.paid), 0).toLocaleString()}</p>
           </div>
           <div className="bg-orange-100 p-4 rounded-2xl text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all">
             <ExternalLink size={32} />
@@ -122,7 +122,7 @@ const Billing: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Service Fee ($)</label>
+                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Service Fee (৳)</label>
                 <input 
                   type="number"
                   className={inputClasses}
@@ -131,7 +131,7 @@ const Billing: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Initial Payment ($)</label>
+                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Initial Payment (৳)</label>
                 <input 
                   type="number"
                   className={`${inputClasses} text-emerald-600 focus:border-emerald-500`}
@@ -183,13 +183,13 @@ const Billing: React.FC = () => {
                   <td className="px-6 py-6">
                     <span className="text-sm font-bold text-gray-600">{record.package}</span>
                   </td>
-                  <td className="px-6 py-6 text-right text-sm font-black text-gray-900">${record.fee.toLocaleString()}</td>
-                  <td className="px-6 py-6 text-right text-sm font-black text-emerald-600">${record.paid.toLocaleString()}</td>
+                  <td className="px-6 py-6 text-right text-sm font-black text-gray-900">৳ {record.fee.toLocaleString()}</td>
+                  <td className="px-6 py-6 text-right text-sm font-black text-emerald-600">৳ {record.paid.toLocaleString()}</td>
                   <td className="px-6 py-6 text-right">
                     <div className="flex items-center justify-end gap-2">
                        {hasDue && <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>}
                        <span className={`text-sm font-black ${hasDue ? 'text-red-600' : 'text-gray-400'}`}>
-                         ${due.toLocaleString()}
+                         ৳ {due.toLocaleString()}
                        </span>
                     </div>
                   </td>

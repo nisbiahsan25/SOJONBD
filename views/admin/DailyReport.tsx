@@ -49,8 +49,8 @@ const DailyReport: React.FC = () => {
         {[
           { label: 'Daily Admissions', value: dailyAdmissions, icon: <ArrowUpRight />, color: 'bg-emerald-50 text-emerald-600' },
           { label: 'Active Releases', value: dailyReleases, icon: <ArrowDownLeft />, color: 'bg-blue-50 text-blue-600' },
-          { label: 'Net Daily Income', value: `$${dailyIncome.toLocaleString()}`, icon: <FileBarChart />, color: 'bg-indigo-50 text-indigo-600' },
-          { label: 'Total Expenses', value: `$${totalExpenses.toLocaleString()}`, icon: <Layers />, color: 'bg-red-50 text-red-600' },
+          { label: 'Net Daily Income', value: `৳ ${dailyIncome.toLocaleString()}`, icon: <FileBarChart />, color: 'bg-indigo-50 text-indigo-600' },
+          { label: 'Total Expenses', value: `৳ ${totalExpenses.toLocaleString()}`, icon: <Layers />, color: 'bg-red-50 text-red-600' },
         ].map((stat) => (
           <div key={stat.label} className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 group hover:border-dark-green transition-all">
             <div className={`p-3 w-fit rounded-2xl ${stat.color} mb-6 transition-all group-hover:scale-110`}>
@@ -97,12 +97,12 @@ const DailyReport: React.FC = () => {
                           <div className="w-4 h-4 rounded-full" style={{ backgroundColor: item.color }}></div>
                           <p className="text-sm font-bold text-gray-600 group-hover:text-dark-green transition-colors">{item.name}</p>
                        </div>
-                       <p className="text-sm font-black text-gray-900">${item.value.toLocaleString()}</p>
+                       <p className="text-sm font-black text-gray-900">৳ {item.value.toLocaleString()}</p>
                     </div>
                  ))}
                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                     <p className="text-sm font-black text-gray-900">Total Operational Cost</p>
-                    <p className="text-lg font-black text-red-600">${totalExpenses.toLocaleString()}</p>
+                    <p className="text-lg font-black text-red-600">৳ {totalExpenses.toLocaleString()}</p>
                  </div>
               </div>
            </div>
