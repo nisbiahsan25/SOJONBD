@@ -381,8 +381,18 @@ const PublicLayout: React.FC<Props> = ({ onGoAdmin, onGoPortal }) => {
           </div>
         </div>
         
-        <div className="mt-16 pt-10 border-t border-white/5 text-center text-gray-600 text-xs font-bold uppercase tracking-[0.3em]">
-          © ২০২৪ সজন মাদকাসক্তি নিরাময় কেন্দ্র | সর্বস্বত্ব সংরক্ষিত
+        <div className="mt-16 pt-10 border-t border-white/5 text-center flex flex-col items-center gap-3">
+          <p className="text-gray-600 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em]">
+            © ২০২৪ সজন মাদকাসক্তি নিরাময় কেন্দ্র | সর্বস্বত্ব সংরক্ষিত
+          </p>
+          <a 
+            href="https://wa.me/8801712395967" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-gray-500 hover:text-yellow-accent transition-all duration-300 text-[9px] md:text-[10px] font-black uppercase tracking-widest"
+          >
+            Design & Developed by <span className="underline decoration-2 underline-offset-4 text-emerald-500 hover:text-yellow-accent">AI Master</span>
+          </a>
         </div>
       </footer>
     </div>
