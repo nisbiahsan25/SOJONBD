@@ -5,7 +5,7 @@ import {
   Phone, MapPin, Heart, ArrowRight, UserCircle, LogIn, Mail, Facebook, 
   LayoutGrid, Users2, Stethoscope, Brain, BookOpen, Bed, MessageSquare, 
   Quote, Star, ShieldAlert, Zap, Home, Users, Award, RefreshCcw, CheckCircle,
-  Activity, Calendar, Building, Sparkles, HeartHandshake, Camera, Menu, X
+  Activity, Calendar, Building, Sparkles, HeartHandshake, Camera, Menu, X, Play, Tv, ChevronDown, ChevronUp, HelpCircle
 } from 'lucide-react';
 
 interface Props {
@@ -28,6 +28,7 @@ const iconMap: Record<string, any> = {
 const PublicLayout: React.FC<Props> = ({ onGoAdmin, onGoPortal }) => {
   const { cms } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   // Smooth scroll helper function
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, id: string) => {
@@ -56,12 +57,22 @@ const PublicLayout: React.FC<Props> = ({ onGoAdmin, onGoPortal }) => {
   const navLinks = [
     { id: 'home', label: 'হোম' },
     { id: 'about', label: 'আমাদের সম্পর্কে' },
+    { id: 'video', label: 'ভিডিও' },
+    { id: 'tv-features', label: 'টিভি ফিচার' },
     { id: 'services', label: 'সেবাসমূহ' },
     { id: 'activities', label: 'সাম্প্রতিক কার্যক্রম' },
     { id: 'team', label: 'টিম' },
     { id: 'testimonials', label: 'টেস্টিমোনিয়াল' },
+    { id: 'faq', label: 'জিজ্ঞাসা' },
     { id: 'contact', label: 'যোগাযোগ' },
   ];
+
+  // Helper to construct Facebook embed URL
+  const getFacebookEmbedUrl = (url: string) => {
+    if (!url) return '';
+    const encodedUrl = encodeURIComponent(url);
+    return `https://www.facebook.com/plugins/video.php?href=${encodedUrl}&show_text=0&width=560`;
+  };
 
   return (
     <div className="bg-white font-['Hind_Siliguri',_sans-serif]">
@@ -185,6 +196,107 @@ const PublicLayout: React.FC<Props> = ({ onGoAdmin, onGoPortal }) => {
                 <p className="text-gray-500 font-medium text-sm">রোগীদের প্রতি ভালোবাসা ও যত্নের মাধ্যমে আমরা তাদের সুস্থ করে তুলি।</p>
              </div>
           </div>
+        </div>
+      </section>
+
+      {/* Video Section */}
+      <section className="py-20 md:py-24 bg-dark-green text-white scroll-mt-20 overflow-hidden relative" id="video">
+        <div className="absolute top-0 right-0 p-20 opacity-5 pointer-events-none">
+          <Play size={400} />
+        </div>
+        <div className="container mx-auto px-6 md:px-8 text-center relative z-10">
+          <div className="mb-12">
+            <h2 className="text-3xl md:text-4xl font-black text-yellow-accent mb-4 uppercase tracking-tight">আমাদের কার্যক্রমের এক ঝলক</h2>
+            <div className="w-16 h-1 bg-white mx-auto mb-8"></div>
+            <p className="text-emerald-50 text-lg md:text-xl font-bold max-w-2xl mx-auto leading-relaxed">
+              সজন কেন্দ্রে আমরা যেভাবে রোগীদের সেবা ও যত্ন প্রদান করি তার একটি সংক্ষিপ্ত ভিডিও।
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto rounded-[40px] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] border-[10px] border-white/5 relative group">
+            <div className="aspect-video bg-black flex items-center justify-center">
+              {cms.videoUrl ? (
+                <iframe 
+                  className="w-full h-full"
+                  src={getFacebookEmbedUrl(cms.videoUrl)} 
+                  title="Sazan Center Video" 
+                  style={{ border: 'none', overflow: 'hidden' }}
+                  scrolling="no"
+                  frameBorder="0" 
+                  allowFullScreen={true}
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                ></iframe>
+              ) : (
+                <div className="text-emerald-100 font-bold italic opacity-50">ভিডিও লিঙ্ক এখনো যুক্ত করা হয়নি।</div>
+              )}
+            </div>
+            
+            <div className="absolute inset-0 bg-dark-green/20 group-hover:bg-transparent transition-all pointer-events-none"></div>
+          </div>
+
+          <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-8">
+            <div className="flex items-center gap-4 bg-white/10 px-8 py-4 rounded-3xl border border-white/10 hover:bg-white/20 transition-all cursor-default">
+              <div className="bg-yellow-accent p-2 rounded-xl text-dark-green">
+                <Activity size={24} strokeWidth={3} />
+              </div>
+              <p className="text-sm font-black uppercase tracking-widest">২৪/৭ সিসিটিভি নজরদারি</p>
+            </div>
+            <div className="flex items-center gap-4 bg-white/10 px-8 py-4 rounded-3xl border border-white/10 hover:bg-white/20 transition-all cursor-default">
+              <div className="bg-yellow-accent p-2 rounded-xl text-dark-green">
+                <CheckCircle size={24} strokeWidth={3} />
+              </div>
+              <p className="text-sm font-black uppercase tracking-widest">ISO মানসম্মত সেবা</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TV Features Section */}
+      <section className="py-20 md:py-24 bg-white scroll-mt-20" id="tv-features">
+        <div className="container mx-auto px-6 md:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-black text-dark-green mb-4 flex items-center justify-center gap-4">
+              <Tv size={40} className="text-yellow-accent" /> জনপ্রিয় টিভি চ্যানেলে সজন
+            </h2>
+            <div className="w-16 h-1 bg-yellow-accent mx-auto mb-6"></div>
+            <p className="text-gray-500 font-bold max-w-2xl mx-auto">
+              সজন মাদকাসক্তি পুনর্বাসন কেন্দ্রের কার্যক্রম ও সফলতা নিয়ে বিভিন্ন সময়ে মূলধারার টিভি চ্যানেলে প্রকাশিত প্রতিবেদন ও সাক্ষাৎকার।
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {(cms.tvFeatures || []).map((tv) => (
+              <div key={tv.id} className="bg-gray-50 rounded-[40px] p-4 shadow-sm border border-gray-100 hover:shadow-2xl transition-all group">
+                 <div className="aspect-video rounded-[32px] overflow-hidden bg-black mb-6 shadow-xl relative">
+                    <iframe 
+                      className="w-full h-full"
+                      src={getFacebookEmbedUrl(tv.videoUrl)} 
+                      title={tv.title} 
+                      style={{ border: 'none', overflow: 'hidden' }}
+                      scrolling="no"
+                      frameBorder="0" 
+                      allowFullScreen={true}
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    ></iframe>
+                 </div>
+                 <div className="px-6 pb-4">
+                    <span className="bg-yellow-accent text-dark-green px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 inline-block">
+                      {tv.channelName}
+                    </span>
+                    <h3 className="text-xl font-black text-dark-green leading-tight group-hover:text-yellow-600 transition-colors">
+                      {tv.title}
+                    </h3>
+                 </div>
+              </div>
+            ))}
+          </div>
+
+          {(!cms.tvFeatures || cms.tvFeatures.length === 0) && (
+             <div className="text-center py-20 bg-gray-50 rounded-[40px] border-4 border-dashed border-gray-200">
+                <Tv size={64} className="mx-auto text-gray-200 mb-4" />
+                <p className="text-gray-400 font-bold italic">বর্তমানে কোনো টিভি ফিচার ভিডিও নেই।</p>
+             </div>
+          )}
         </div>
       </section>
 
@@ -337,6 +449,40 @@ const PublicLayout: React.FC<Props> = ({ onGoAdmin, onGoPortal }) => {
                     <UserCircle size={24} />
                   </div>
                   <span className="font-black text-dark-green text-lg">{t.name}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 md:py-24 bg-white scroll-mt-20" id="faq">
+        <div className="container mx-auto px-6 md:px-8 max-w-4xl">
+           <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-black text-dark-green mb-4">{cms?.faqTitle}</h2>
+            <div className="w-16 h-1 bg-yellow-accent mx-auto mb-6"></div>
+            <p className="text-gray-500 font-bold">{cms?.faqSubtitle}</p>
+          </div>
+
+          <div className="space-y-4">
+            {(cms?.faqs || []).map((faq) => (
+              <div key={faq.id} className="bg-gray-50 rounded-[28px] overflow-hidden border border-gray-100 transition-all hover:border-dark-green/30 shadow-sm">
+                <button 
+                  onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                  className="w-full px-8 py-6 flex items-center justify-between text-left group"
+                >
+                  <span className="text-lg font-black text-dark-green group-hover:text-emerald-800 transition-colors flex items-center gap-3">
+                    <HelpCircle className="text-yellow-accent" size={20} /> {faq.question}
+                  </span>
+                  <div className={`p-2 rounded-full transition-all ${openFaq === faq.id ? 'bg-dark-green text-white rotate-180' : 'bg-white text-dark-green shadow-sm'}`}>
+                     <ChevronDown size={20} />
+                  </div>
+                </button>
+                <div className={`px-8 overflow-hidden transition-all duration-300 ease-in-out ${openFaq === faq.id ? 'max-h-[500px] pb-8 opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="pt-4 border-t border-gray-100 text-gray-600 font-medium leading-relaxed">
+                    {faq.answer}
+                  </div>
                 </div>
               </div>
             ))}

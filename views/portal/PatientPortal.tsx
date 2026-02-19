@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../store';
-import { Patient, BillingRecord, DietPlan } from '../../types';
+import { Patient, BillingRecord, DietPlan, GeneralDietChart } from '../../types';
 import { 
   LogOut, Heart, Phone, MessageCircle, Activity, Bed, User, Clock, 
-  CreditCard, Calendar, Utensils, CheckCircle, AlertCircle, Wallet, ArrowRight 
+  CreditCard, Calendar, Utensils, CheckCircle, AlertCircle, Wallet, ArrowRight, LayoutDashboard, UserCircle, ShieldAlert, CalendarDays
 } from 'lucide-react';
 
 interface Props {
@@ -12,11 +12,11 @@ interface Props {
 }
 
 const PatientPortal: React.FC<Props> = ({ onLogout }) => {
-  const { patients, billing, dietPlans, cms } = useApp();
+  const { patients, billing, dietPlans, generalDietChart, cms } = useApp();
   const [patientId, setPatientId] = useState('');
   const [loggedInPatient, setLoggedInPatient] = useState<Patient | null>(null);
+  const [activePortalTab, setActivePortalTab] = useState<'overview' | 'diet' | 'finance' | 'profile'>('overview');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'Bkash' | 'Nagad' | 'Bank' | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -34,22 +34,22 @@ const PatientPortal: React.FC<Props> = ({ onLogout }) => {
             <Heart size={56} fill="currentColor" />
           </div>
           <h2 className="text-4xl font-black text-gray-900 mb-3 tracking-tight">অভিভাবক পোর্টাল</h2>
-          <p className="text-gray-400 font-bold mb-10 leading-relaxed">আপনার পেশেন্ট আইডি ব্যবহার করে ড্যাশবোর্ডে প্রবেশ করুন।</p>
+          <p className="text-gray-400 font-bold mb-10 leading-relaxed">আপনার পেশেন্ট আইডি ব্যবহার করে ড্যাশবোর্ড দেখুন।</p>
           <form onSubmit={handleLogin} className="space-y-8">
             <div className="relative group">
               <input 
                 required
-                placeholder="আইডি লিখুন (যেমন: P001)"
-                className="w-full px-8 py-6 rounded-[24px] border-4 border-gray-50 bg-gray-50/50 text-gray-900 placeholder:text-gray-300 focus:border-dark-green focus:bg-white outline-none text-2xl text-center font-black tracking-widest transition-all shadow-inner group-hover:border-gray-100"
+                placeholder="P001"
+                className="w-full px-8 py-6 rounded-[24px] border-4 border-gray-100 bg-gray-50/50 text-gray-900 placeholder:text-gray-300 focus:border-dark-green focus:bg-white outline-none text-2xl text-center font-black tracking-widest transition-all"
                 value={patientId}
                 onChange={e => setPatientId(e.target.value)}
               />
             </div>
-            <button className="w-full bg-dark-green text-yellow-accent py-6 rounded-[24px] font-black text-xl hover:shadow-2xl hover:bg-emerald-900 transition-all transform active:scale-95 shadow-dark-green/20">
+            <button className="w-full bg-dark-green text-yellow-accent py-6 rounded-[24px] font-black text-xl hover:bg-emerald-900 transition-all shadow-xl">
               প্রবেশ করুন
             </button>
           </form>
-          <button onClick={onLogout} className="mt-10 text-sm text-gray-400 font-black hover:text-dark-green transition-colors uppercase tracking-widest border-b-2 border-transparent hover:border-dark-green pb-1">
+          <button onClick={onLogout} className="mt-10 text-sm text-gray-400 font-black hover:text-dark-green transition-colors uppercase tracking-widest">
             হোমপেজে ফিরে যান
           </button>
         </div>
@@ -57,281 +57,235 @@ const PatientPortal: React.FC<Props> = ({ onLogout }) => {
     );
   }
 
-  // Calculate Balance
   const patientBills = billing.filter(b => b.patientId === loggedInPatient.id);
   const totalFee = patientBills.reduce((acc, b) => acc + b.fee, 0);
   const totalPaid = patientBills.reduce((acc, b) => acc + b.paid, 0);
   const dueBalance = totalFee - totalPaid;
+  
+  const specialDietPlan = dietPlans.find(d => d.patientId === loggedInPatient.id);
+  
+  const portalNav = [
+    { id: 'overview', icon: <LayoutDashboard size={24} />, label: 'ড্যাশবোর্ড' },
+    { id: 'diet', icon: <Utensils size={24} />, label: 'ডায়েট' },
+    { id: 'finance', icon: <Wallet size={24} />, label: 'পেমেন্ট' },
+    { id: 'profile', icon: <UserCircle size={24} />, label: 'প্রোফাইল' },
+  ];
 
-  // Get Diet Plan
-  const dietPlan = dietPlans.find(d => d.patientId === loggedInPatient.id);
-
-  const handleMeetingRequest = () => {
-    alert(`ডাক্তার ${loggedInPatient.doctor}-এর কাছে আপনার মিটিং রিকোয়েস্ট পাঠানো হয়েছে। কর্তৃপক্ষ আপনার সাথে যোগাযোগ করবে।`);
-    setShowMeetingModal(false);
-  };
-
-  const handlePaymentSubmit = () => {
-    if(!selectedPaymentMethod) return alert("অনুগ্রহ করে একটি পেমেন্ট মাধ্যম নির্বাচন করুন।");
-    alert(`${selectedPaymentMethod}-এর মাধ্যমে আপনার ${dueBalance} টাকা পেমেন্ট সফল হয়েছে (সিমুলেশন)।`);
-    setShowPaymentModal(false);
-    setSelectedPaymentMethod(null);
+  const daysBn: {[key: string]: string} = {
+    'Saturday': 'শনিবার', 'Sunday': 'রবিবার', 'Monday': 'সোমবার', 'Tuesday': 'মঙ্গলবার', 'Wednesday': 'বুধবার', 'Thursday': 'বৃহস্পতিবার', 'Friday': 'শুক্রবার'
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-['Hind_Siliguri',_sans-serif]">
-      {/* Navbar */}
-      <nav className="bg-dark-green text-white h-20 px-8 flex items-center justify-between shadow-lg sticky top-0 z-50">
+    <div className="min-h-screen bg-gray-50 font-['Hind_Siliguri',_sans-serif] pb-32 lg:pb-8 overflow-x-hidden">
+      <nav className="bg-dark-green text-white h-20 px-6 flex items-center justify-between shadow-lg sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="bg-yellow-accent text-dark-green p-2 rounded-lg"><Heart size={20} /></div>
+          <div className="bg-yellow-accent text-dark-green p-1.5 rounded-lg"><Heart size={20} fill="currentColor" /></div>
           <span className="text-xl font-black tracking-tight">সজন পোর্টাল</span>
         </div>
-        <button onClick={() => setLoggedInPatient(null)} className="flex items-center gap-2 text-emerald-100 font-bold hover:text-white">
-          <LogOut size={20} /> লগআউট
+        <button onClick={() => setLoggedInPatient(null)} className="p-2 text-emerald-100 hover:text-white">
+          <LogOut size={24} />
         </button>
       </nav>
 
-      <div className="max-w-6xl mx-auto p-6 md:p-8 space-y-8">
-        {/* Header Profile */}
-        <div className="bg-white p-6 md:p-10 rounded-[40px] shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-            <Activity size={200} />
-          </div>
-          
-          <img src={loggedInPatient.photo} alt="" className="w-36 h-36 rounded-[48px] border-8 border-emerald-50 shadow-xl object-cover relative z-10" />
-          
-          <div className="flex-1 text-center md:text-left relative z-10">
-            <h1 className="text-4xl font-black text-gray-900 mb-3">{loggedInPatient.name}</h1>
-            <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <span className="bg-emerald-50 text-dark-green px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-2 border border-emerald-100 uppercase tracking-widest">
-                <Bed size={14} /> বেড: {loggedInPatient.bedId || 'N/A'}
-              </span>
-              <span className="bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-2 border border-blue-100 uppercase tracking-widest">
-                <User size={14} /> ডাক্তার: {loggedInPatient.doctor}
-              </span>
-              <span className="bg-gray-50 text-gray-600 px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-2 border border-gray-100 uppercase tracking-widest">
-                <Clock size={14} /> ভর্তি: {loggedInPatient.admissionDate}
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex flex-col gap-3 w-full md:w-auto relative z-10">
-            <a 
-              href={`tel:${cms?.emergencyPhone || '01804600500'}`}
-              className="bg-red-600 text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-red-100 hover:-translate-y-1 transition-all active:scale-95"
-            >
-              <Phone /> জরুরী কল
-            </a>
-            <a 
-              href={`https://wa.me/${(cms?.emergencyPhone || '01804600500').replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#25D366] text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-green-100 hover:-translate-y-1 transition-all active:scale-95"
-            >
-              <MessageCircle /> হোয়াটসঅ্যাপ
-            </a>
-          </div>
-        </div>
+      <div className="max-w-6xl mx-auto p-4 lg:p-8 space-y-6 lg:space-y-8">
+        {(activePortalTab === 'overview' || activePortalTab === 'profile') && (
+          <div className="animate-in fade-in duration-300 space-y-6 lg:space-y-8">
+             <div className="bg-white p-6 lg:p-10 rounded-[40px] shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-6 lg:gap-8">
+               <img src={loggedInPatient.photo} alt="" className="w-32 h-32 lg:w-36 lg:h-36 rounded-[40px] border-8 border-emerald-50 shadow-xl object-cover shrink-0" />
+               <div className="flex-1 text-center md:text-left">
+                 <h1 className="text-3xl lg:text-4xl font-black text-gray-900 mb-2">{loggedInPatient.name}</h1>
+                 <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                    <span className="bg-emerald-50 text-dark-green px-3 py-1.5 rounded-xl text-[10px] font-black border border-emerald-100 uppercase tracking-widest">ID: {loggedInPatient.id}</span>
+                    <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100 uppercase tracking-widest">ডাক্তার: {loggedInPatient.doctor}</span>
+                 </div>
+               </div>
+               <div className="flex gap-2 w-full md:w-auto">
+                 <a href={`tel:${cms.emergencyPhone}`} className="flex-1 lg:flex-none bg-red-600 text-white p-4 rounded-2xl flex items-center justify-center gap-2 font-black shadow-lg shadow-red-100"><Phone size={20} /> জরুরী</a>
+                 <a href={`https://wa.me/${cms.emergencyPhone}`} className="flex-1 lg:flex-none bg-[#25D366] text-white p-4 rounded-2xl flex items-center justify-center gap-2 font-black shadow-lg shadow-green-100"><MessageCircle size={20} /> চ্যাট</a>
+               </div>
+             </div>
 
-        {/* Dashboard Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            
-            {/* Financial Info */}
-            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 relative group overflow-hidden">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="flex items-center gap-6">
-                  <div className="bg-orange-100 text-orange-600 p-5 rounded-[24px]">
-                    <Wallet size={32} />
+             {activePortalTab === 'overview' && (
+               <>
+                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-black text-gray-900">সুস্থতার আপডেট</h3>
+                    <span className="text-3xl font-black text-dark-green">{loggedInPatient.recoveryProgress}%</span>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-1">মোট বকেয়া পরিমাণ</h3>
-                    <p className="text-4xl font-black text-orange-600">৳ {dueBalance.toLocaleString()}</p>
+                  <div className="w-full bg-gray-100 h-6 rounded-full overflow-hidden mb-4 p-1">
+                    <div className="bg-gradient-to-r from-dark-green to-yellow-accent h-full rounded-full transition-all duration-1000" style={{ width: `${loggedInPatient.recoveryProgress}%` }}></div>
+                  </div>
+                  <p className="text-gray-500 font-bold italic text-sm">“ধৈর্য ধরুন, আমরা আপনার প্রিয়জনের সুস্থতায় সর্বোচ্চ সচেষ্ট।”</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-emerald-900 p-8 rounded-[40px] text-white flex flex-col justify-between shadow-xl relative overflow-hidden group">
+                    <div className="relative z-10">
+                      <p className="text-yellow-accent font-black text-[10px] uppercase tracking-widest mb-2">চুক্তির তথ্য (Contract)</p>
+                      <h4 className="text-2xl font-black mb-4 flex items-center gap-2">
+                        <Clock size={20} /> মেয়াদের সময়কাল: {loggedInPatient.contractDuration || 'উল্লেখ নেই'}
+                      </h4>
+                      {loggedInPatient.releaseDate && (
+                        <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-2xl w-fit border border-white/10 mb-4 shadow-inner">
+                           <CalendarDays size={16} className="text-yellow-accent" />
+                           <span className="font-black text-sm">রিলিজের সম্ভাব্য তারিখ: {loggedInPatient.releaseDate}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl w-fit border border-white/10">
+                        <Wallet size={16} />
+                        <span className="font-bold">মোট চুক্তির টাকা: ৳ {loggedInPatient.contractAmount?.toLocaleString() || '০'}</span>
+                      </div>
+                    </div>
+                    <ShieldAlert size={120} className="absolute -right-10 -bottom-10 opacity-10 group-hover:scale-125 transition-transform duration-1000" />
+                  </div>
+
+                  <div className="bg-orange-50 p-8 rounded-[40px] border-2 border-orange-100 flex flex-col justify-center gap-4">
+                    <div>
+                      <h3 className="text-xs font-black text-orange-400 uppercase tracking-widest mb-1">মোট বকেয়া</h3>
+                      <p className="text-4xl font-black text-orange-600">৳ {dueBalance.toLocaleString()}</p>
+                    </div>
+                    {dueBalance > 0 && (
+                      <button onClick={() => setActivePortalTab('finance')} className="bg-orange-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg w-fit">পরিশোধ করুন</button>
+                    )}
                   </div>
                 </div>
-                {dueBalance > 0 && (
-                  <button 
-                    onClick={() => setShowPaymentModal(true)}
-                    className="bg-dark-green text-yellow-accent px-10 py-4 rounded-[20px] font-black text-lg flex items-center gap-3 shadow-xl hover:scale-105 transition-all"
-                  >
-                    বকেয়া পরিশোধ করুন <ArrowRight size={20} />
-                  </button>
-                )}
-                {dueBalance <= 0 && (
-                  <div className="flex items-center gap-2 text-emerald-600 font-black">
-                    <CheckCircle /> কোনো বকেয়া নেই
+               </>
+             )}
+          </div>
+        )}
+
+        {activePortalTab === 'diet' && (
+          <div className="animate-in slide-in-from-right duration-300 space-y-6">
+            <div className="bg-dark-green p-8 md:p-12 rounded-[50px] text-white relative overflow-hidden shadow-2xl">
+               <div className="relative z-10">
+                  <h3 className="text-3xl font-black mb-2 flex items-center gap-3 text-yellow-accent">
+                    <Utensils /> খাবারের সাপ্তাহিক চার্ট
+                  </h3>
+                  <p className="text-emerald-100 opacity-70 font-bold uppercase tracking-[0.2em] text-xs">আপনার প্রিয়জনের পুষ্টিকর খাবার নিশ্চিত করা হচ্ছে</p>
+               </div>
+               <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+                  <Utensils size={150} />
+               </div>
+            </div>
+
+            {specialDietPlan ? (
+              <div className="bg-white p-8 rounded-[40px] shadow-xl border-4 border-emerald-50 relative animate-in zoom-in duration-500">
+                <div className="absolute top-4 right-4 bg-emerald-100 text-dark-green px-4 py-2 rounded-2xl flex items-center gap-2 font-black text-xs uppercase tracking-widest">
+                  <ShieldAlert size={16} /> বিশেষ চার্ট (Special Case)
+                </div>
+                <h4 className="text-2xl font-black text-dark-green mb-8">আজকের বিশেষ ডায়েট</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {[
+                    { label: 'সকাল (Breakfast)', val: specialDietPlan.breakfast, icon: '🍞' },
+                    { label: 'দুপুর (Lunch)', val: specialDietPlan.lunch, icon: '🍛' },
+                    { label: 'বিকেল (Snacks)', val: specialDietPlan.snacks, icon: '🍎' },
+                    { label: 'রাত (Dinner)', val: specialDietPlan.dinner, icon: '🍲' },
+                   ].map(item => (
+                     <div key={item.label} className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 flex items-center gap-5">
+                       <span className="text-4xl">{item.icon}</span>
+                       <div>
+                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{item.label}</p>
+                          <p className="text-lg font-black text-emerald-900">{item.val}</p>
+                       </div>
+                     </div>
+                   ))}
+                </div>
+                {specialDietPlan.restrictions && (
+                  <div className="mt-8 p-6 bg-red-50 rounded-3xl border border-red-100 flex items-center gap-4">
+                     <AlertCircle className="text-red-500" />
+                     <p className="text-sm font-bold text-red-900 italic">“{specialDietPlan.restrictions}” - এই বিষয়গুলোতে বিশেষভাবে নজর দেওয়া হচ্ছে।</p>
                   </div>
                 )}
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+                 <div className="bg-gray-50 p-6 border-b border-gray-100">
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest text-center">সাপ্তাহিক নিয়মিত রুটিন (সবার জন্য প্রযোজ্য)</p>
+                 </div>
+                 <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                       <thead className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                          <tr>
+                             <th className="px-8 py-6">দিন</th>
+                             <th className="px-6 py-6">সকাল</th>
+                             <th className="px-6 py-6">দুপুর</th>
+                             <th className="px-6 py-6">বিকেল</th>
+                             <th className="px-6 py-6">রাত</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-gray-100">
+                          {Object.keys(generalDietChart.days).map(day => (
+                            <tr key={day} className="hover:bg-emerald-50/20 transition-colors group">
+                               <td className="px-8 py-5">
+                                  <span className="font-black text-gray-900 group-hover:text-dark-green transition-colors">{daysBn[day]}</span>
+                               </td>
+                               <td className="px-6 py-5 text-sm font-bold text-gray-500">{generalDietChart.days[day].breakfast}</td>
+                               <td className="px-6 py-5 text-sm font-bold text-gray-500">{generalDietChart.days[day].lunch}</td>
+                               <td className="px-6 py-5 text-sm font-bold text-gray-500">{generalDietChart.days[day].snacks}</td>
+                               <td className="px-6 py-5 text-sm font-bold text-gray-500">{generalDietChart.days[day].dinner}</td>
+                            </tr>
+                          ))}
+                       </tbody>
+                    </table>
+                 </div>
+              </div>
+            )}
+            
+            <p className="text-center text-gray-400 font-bold italic text-sm mt-6">রুটিনে পরিবর্তন যেকোনো সময় হতে পারে, সর্বশেষ আপডেটের জন্য পোর্টালে চোখ রাখুন।</p>
+          </div>
+        )}
 
-            {/* Recovery Progress */}
+        {activePortalTab === 'finance' && (
+          <div className="animate-in slide-in-from-right duration-300 space-y-6">
             <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-2xl font-black text-gray-900">সুস্থতার অগ্রগতি</h3>
-                <span className="text-4xl font-black text-dark-green">{loggedInPatient.recoveryProgress}%</span>
-              </div>
-              <div className="w-full bg-gray-100 h-8 rounded-full overflow-hidden mb-6 p-1 border-4 border-gray-50">
-                <div 
-                  className="bg-gradient-to-r from-dark-green to-yellow-accent h-full rounded-full transition-all duration-2000 shadow-inner" 
-                  style={{ width: `${loggedInPatient.recoveryProgress}%` }}
-                ></div>
-              </div>
-              <p className="text-gray-500 font-bold leading-relaxed italic text-lg">
-                “ধৈর্য ধরুন, আপনার প্রিয়জন ধীরে ধীরে সুস্থ হয়ে উঠছেন। আমাদের বিশেষজ্ঞ টিম তার সার্বক্ষণিক যত্নে নিয়োজিত।”
-              </p>
-            </div>
-
-            {/* Diet Chart */}
-            <div className="bg-dark-green p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-               <div className="absolute -right-20 -bottom-20 opacity-10">
-                  <Utensils size={300} />
+               <h3 className="text-2xl font-black mb-6">পেমেন্ট হিস্ট্রি</h3>
+               <div className="space-y-4">
+                 {patientBills.map(b => (
+                   <div key={b.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <div>
+                        <p className="font-bold text-gray-900">{b.package}</p>
+                        <p className="text-[10px] text-gray-400 font-bold">{b.date}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-black text-emerald-600">৳ {b.paid}</p>
+                        <p className="text-[10px] font-bold text-gray-400">৳ {b.fee} (Fee)</p>
+                      </div>
+                   </div>
+                 ))}
                </div>
-               <div className="relative z-10">
-                  <h3 className="text-2xl font-black mb-8 flex items-center gap-3 text-yellow-accent">
-                    <Utensils /> আজকের ডায়েট চার্ট
-                  </h3>
-                  {dietPlan ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-white/10 p-6 rounded-3xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all">
-                        <p className="text-xs font-black text-yellow-accent uppercase tracking-widest mb-2">সকালের নাস্তা</p>
-                        <p className="text-xl font-bold">{dietPlan.breakfast}</p>
-                      </div>
-                      <div className="bg-white/10 p-6 rounded-3xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all">
-                        <p className="text-xs font-black text-yellow-accent uppercase tracking-widest mb-2">দুপুরের খাবার</p>
-                        <p className="text-xl font-bold">{dietPlan.lunch}</p>
-                      </div>
-                      <div className="bg-white/10 p-6 rounded-3xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all">
-                        <p className="text-xs font-black text-yellow-accent uppercase tracking-widest mb-2">বিকেলের নাস্তা</p>
-                        <p className="text-xl font-bold">{dietPlan.snacks}</p>
-                      </div>
-                      <div className="bg-white/10 p-6 rounded-3xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all">
-                        <p className="text-xs font-black text-yellow-accent uppercase tracking-widest mb-2">রাতের খাবার</p>
-                        <p className="text-xl font-bold">{dietPlan.dinner}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-white/10 p-10 rounded-3xl text-center italic opacity-60">
-                      কোনো ডায়েট চার্ট খুঁজে পাওয়া যায়নি। সাধারণত সকল রোগীর জন্য স্বাস্থ্যসম্মত খাবার পরিবেশন করা হয়।
-                    </div>
-                  )}
-               </div>
+               <button onClick={() => setShowPaymentModal(true)} className="w-full mt-8 bg-dark-green text-yellow-accent py-5 rounded-3xl font-black text-xl shadow-xl">বকেয়া পরিশোধ করুন (৳{dueBalance})</button>
             </div>
           </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            {/* Doctor Info */}
-            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 text-center">
-              <div className="w-24 h-24 bg-emerald-50 rounded-[32px] mx-auto mb-6 flex items-center justify-center text-dark-green border-4 border-white shadow-lg">
-                <User size={48} />
-              </div>
-              <h4 className="text-2xl font-black text-gray-900 mb-1">ডাক্তার: {loggedInPatient.doctor}</h4>
-              <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-8">দায়িত্বপ্রাপ্ত চিকিৎসক</p>
-              <button 
-                onClick={() => setShowMeetingModal(true)}
-                className="w-full bg-emerald-50 text-dark-green py-5 rounded-2xl font-black text-lg hover:bg-dark-green hover:text-white transition-all shadow-sm flex items-center justify-center gap-3"
-              >
-                <Calendar size={20} /> মিটিং রিকোয়েস্ট
-              </button>
-            </div>
-
-            {/* Guidelines */}
-            <div className="bg-yellow-accent p-8 rounded-[40px] text-dark-green shadow-xl shadow-yellow-100 relative overflow-hidden">
-              <div className="absolute -right-4 -top-4 opacity-10">
-                <AlertCircle size={100} />
-              </div>
-              <h3 className="text-xl font-black mb-6 flex items-center gap-2 uppercase tracking-tight">
-                <Activity size={24} /> বিশেষ নির্দেশনা
-              </h3>
-              <ul className="space-y-4 text-sm font-bold">
-                <li className="flex items-start gap-3 bg-white/30 p-3 rounded-xl border border-white/20">• রুটিন অনুযায়ী সকল কাউন্সিলিং সেশনে অংশগ্রহণ বাধ্যতামূলক।</li>
-                <li className="flex items-start gap-3 bg-white/30 p-3 rounded-xl border border-white/20">• ঔষধ সেবনে কোনো অবহেলা করা যাবে না।</li>
-                <li className="flex items-start gap-3 bg-white/30 p-3 rounded-xl border border-white/20">• মোবাইল ফোন ব্যবহার সম্পূর্ণ নিষিদ্ধ।</li>
-                <li className="flex items-start gap-3 bg-white/30 p-3 rounded-xl border border-white/20">• সুস্থ হওয়ার জন্য মানসিক মনোবল বজায় রাখুন।</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Payment Modal */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 min-h-[4.5rem] lg:hidden flex items-center justify-around z-[100] mobile-bottom-nav shadow-[0_-4px_30px_rgba(0,0,0,0.1)]">
+        {portalNav.map(item => (
+          <button 
+            key={item.id}
+            onClick={() => setActivePortalTab(item.id as any)}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full py-2 transition-all ${activePortalTab === item.id ? 'text-dark-green' : 'text-gray-400'}`}
+          >
+            <div className={`p-1.5 rounded-xl transition-all ${activePortalTab === item.id ? 'bg-emerald-50 scale-110' : ''}`}>
+              {item.icon}
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-widest ${activePortalTab === item.id ? 'opacity-100' : 'opacity-80'}`}>
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </nav>
+
       {showPaymentModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[48px] shadow-2xl w-full max-w-lg overflow-hidden border-8 border-emerald-50">
-            <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-              <h3 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-                <CreditCard className="text-dark-green" /> বকেয়া পরিশোধ
-              </h3>
-              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-red-500 transition-colors">
-                <Activity size={24} className="rotate-45" />
-              </button>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md p-10">
+            <h3 className="text-2xl font-black mb-8">পেমেন্ট মাধ্যম</h3>
+            <div className="grid grid-cols-2 gap-4 mb-8">
+               <button onClick={() => setSelectedPaymentMethod('Bkash')} className={`p-4 rounded-3xl border-4 ${selectedPaymentMethod === 'Bkash' ? 'border-dark-green bg-emerald-50' : 'border-gray-50'}`}>Bkash</button>
+               <button onClick={() => setSelectedPaymentMethod('Nagad')} className={`p-4 rounded-3xl border-4 ${selectedPaymentMethod === 'Nagad' ? 'border-dark-green bg-emerald-50' : 'border-gray-50'}`}>Nagad</button>
             </div>
-            <div className="p-10 space-y-8">
-              <div className="text-center bg-orange-50 p-6 rounded-3xl border border-orange-100">
-                <p className="text-xs font-black text-orange-400 uppercase tracking-widest mb-1">পরিশোধযোগ্য মোট টাকা</p>
-                <p className="text-4xl font-black text-orange-600">৳ {dueBalance.toLocaleString()}</p>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">পেমেন্ট মাধ্যম নির্বাচন করুন</p>
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { id: 'Bkash', color: 'bg-[#e2136e]', label: 'বিকাশ', img: 'https://cdn-icons-png.flaticon.com/512/5968/5968170.png' },
-                    { id: 'Nagad', color: 'bg-[#f7941d]', label: 'নগদ', img: 'https://cdn-icons-png.flaticon.com/512/5968/5968172.png' },
-                    { id: 'Bank', color: 'bg-dark-green', label: 'ব্যাংক', img: 'https://cdn-icons-png.flaticon.com/512/2830/2830284.png' },
-                  ].map((m) => (
-                    <button 
-                      key={m.id}
-                      onClick={() => setSelectedPaymentMethod(m.id as any)}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-3xl border-4 transition-all ${selectedPaymentMethod === m.id ? 'border-yellow-accent bg-emerald-50 scale-105' : 'border-gray-50 bg-white hover:border-dark-green'}`}
-                    >
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center p-2 ${m.color}`}>
-                         <img src={m.img} alt={m.label} className="w-full h-full object-contain brightness-0 invert" />
-                      </div>
-                      <span className="font-black text-xs">{m.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button 
-                onClick={handlePaymentSubmit}
-                className="w-full bg-dark-green text-yellow-accent py-5 rounded-[24px] font-black text-xl hover:bg-emerald-900 shadow-2xl transition-all transform hover:-translate-y-1"
-              >
-                পেমেন্ট সম্পন্ন করুন
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Meeting Modal */}
-      {showMeetingModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in zoom-in duration-300">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden border-8 border-emerald-50 p-10 text-center">
-            <div className="w-20 h-20 bg-emerald-100 text-dark-green rounded-full flex items-center justify-center mx-auto mb-6">
-              <Calendar size={40} />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">মিটিং রিকোয়েস্ট</h3>
-            <p className="text-gray-500 font-medium mb-8">আপনি কি ডাক্তার {loggedInPatient.doctor}-এর সাথে মিটিং করতে চান?</p>
-            
-            <div className="flex flex-col gap-4">
-              <button 
-                onClick={handleMeetingRequest}
-                className="w-full bg-dark-green text-white py-4 rounded-2xl font-black text-lg hover:shadow-xl transition-all"
-              >
-                হ্যাঁ, রিকোয়েস্ট পাঠান
-              </button>
-              <button 
-                onClick={() => setShowMeetingModal(false)}
-                className="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black text-lg hover:bg-gray-200 transition-all"
-              >
-                না, ফিরে যান
-              </button>
-            </div>
+            <button onClick={() => { alert('সফল হয়েছে'); setShowPaymentModal(false); }} className="w-full bg-dark-green text-white py-4 rounded-2xl font-black">পরিশোধ নিশ্চিত করুন</button>
+            <button onClick={() => setShowPaymentModal(false)} className="w-full mt-2 py-4 text-gray-400 font-bold">বাতিল করুন</button>
           </div>
         </div>
       )}

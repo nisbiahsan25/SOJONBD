@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../store';
-import { Search, Filter, Eye, Edit, CheckCircle, X, Save, Heart } from 'lucide-react';
+import { Search, Filter, Eye, Edit, CheckCircle, X, Save, Heart, Clock, Wallet, CalendarDays } from 'lucide-react';
 import { Patient } from '../../types';
 
 const PatientList: React.FC = () => {
@@ -11,7 +11,6 @@ const PatientList: React.FC = () => {
   const [addictionFilter, setAddictionFilter] = useState('All');
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
-  // Get unique addiction types for filtering
   const addictionTypes = Array.from(new Set(patients.map(p => p.addictionType)));
 
   const filtered = patients.filter(p => {
@@ -34,7 +33,6 @@ const PatientList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
       <div className="flex flex-col xl:flex-row gap-6 justify-between bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-dark-green transition-colors" size={20} />
@@ -75,7 +73,6 @@ const PatientList: React.FC = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-x-auto">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
@@ -153,7 +150,6 @@ const PatientList: React.FC = () => {
         )}
       </div>
 
-      {/* Edit Modal */}
       {editingPatient && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all scale-100 border-8 border-emerald-50">
@@ -213,6 +209,43 @@ const PatientList: React.FC = () => {
                     onChange={(e) => setEditingPatient({...editingPatient, phone: e.target.value})}
                   />
                 </div>
+                
+                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 space-y-4">
+                  <h4 className="text-[10px] font-black text-emerald-800 uppercase tracking-widest flex items-center gap-2">
+                    <Clock size={14} /> চুক্তির মেয়াদ
+                  </h4>
+                  <input
+                    type="text"
+                    placeholder="যেমন: ৬ মাস"
+                    className="w-full px-4 py-2 bg-white border border-emerald-200 rounded-xl outline-none focus:border-dark-green transition-all font-bold text-sm"
+                    value={editingPatient.contractDuration || ''}
+                    onChange={(e) => setEditingPatient({...editingPatient, contractDuration: e.target.value})}
+                  />
+                </div>
+                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 space-y-4">
+                  <h4 className="text-[10px] font-black text-emerald-800 uppercase tracking-widest flex items-center gap-2">
+                    <CalendarDays size={14} /> রিলিজের সম্ভাব্য তারিখ
+                  </h4>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-2 bg-white border border-emerald-200 rounded-xl outline-none focus:border-dark-green transition-all font-bold text-sm"
+                    value={editingPatient.releaseDate || ''}
+                    onChange={(e) => setEditingPatient({...editingPatient, releaseDate: e.target.value})}
+                  />
+                </div>
+                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 space-y-4">
+                  <h4 className="text-[10px] font-black text-emerald-800 uppercase tracking-widest flex items-center gap-2">
+                    <Wallet size={14} /> চুক্তিবদ্ধ মোট টাকা
+                  </h4>
+                  <input
+                    type="number"
+                    placeholder="যেমন: ২০০০০"
+                    className="w-full px-4 py-2 bg-white border border-emerald-200 rounded-xl outline-none focus:border-dark-green transition-all font-bold text-sm"
+                    value={editingPatient.contractAmount || ''}
+                    onChange={(e) => setEditingPatient({...editingPatient, contractAmount: parseInt(e.target.value) || 0})}
+                  />
+                </div>
+
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Diagnosis Type</label>
                   <input
@@ -223,7 +256,7 @@ const PatientList: React.FC = () => {
                     onChange={(e) => setEditingPatient({...editingPatient, addictionType: e.target.value})}
                   />
                 </div>
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Recovery Milestone (%)</label>
                   <div className="flex items-center gap-4">
                     <input

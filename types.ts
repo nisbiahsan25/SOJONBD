@@ -17,6 +17,9 @@ export interface Patient {
   treatmentPlan: string;
   emergencyContact: string;
   recoveryProgress: number;
+  contractDuration?: string; // e.g. "6 months"
+  contractAmount?: number;   // e.g. 20000
+  releaseDate?: string;      // e.g. "2024-12-31"
 }
 
 export interface Bed {
@@ -45,12 +48,23 @@ export interface BillingRecord {
   paid: number;
   method: string;
   date: string;
+  doctorFee?: number;
+  packageFee?: number;
+}
+
+export interface Expense {
+  id: string;
+  category: string;
+  amount: number;
+  description: string;
+  date: string;
+  recordedBy: string;
 }
 
 export interface Role {
   id: string;
   name: string;
-  permissions: string[]; // Changed to string array for easier checking
+  permissions: string[];
 }
 
 export interface PaymentMethod {
@@ -75,6 +89,20 @@ export interface Visitor {
   phone: string;
   date: string;
   time: string;
+  receivedBy: string;
+  itemsBrought: string;
+}
+
+export interface DayDiet {
+  breakfast: string;
+  lunch: string;
+  snacks: string;
+  dinner: string;
+}
+
+export interface GeneralDietChart {
+  days: { [key: string]: DayDiet };
+  updatedAt: string;
 }
 
 export interface DoctorChart {
@@ -128,11 +156,26 @@ export interface RosterEntry {
   department: string;
 }
 
+export interface TVFeature {
+  id: string;
+  title: string;
+  channelName: string;
+  videoUrl: string;
+}
+
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+}
+
 export interface CMSContent {
   logo?: string;
   heroTitle: string;
   heroSubtitle: string;
   heroImage: string;
+  videoUrl?: string;
+  tvFeatures?: TVFeature[];
   aboutTitle: string;
   aboutText: string;
   servicesTitle: string;
@@ -145,6 +188,9 @@ export interface CMSContent {
   doctors: { id: string; name: string; role: string; image: string }[];
   testimonialsTitle: string;
   testimonials: { id: string; name: string; text: string; rating: number }[];
+  faqTitle: string;
+  faqSubtitle: string;
+  faqs: FAQ[];
   emergencyPhone: string;
   address: string;
   facebookLink: string;
@@ -155,15 +201,17 @@ export interface AppState {
   beds: Bed[];
   inventory: InventoryItem[];
   billing: BillingRecord[];
+  expenses: Expense[];
   visitors: Visitor[];
   doctorCharts: DoctorChart[];
   complaints: Complaint[];
   dietPlans: DietPlan[];
+  generalDietChart: GeneralDietChart;
   incidents: Incident[];
   roster: RosterEntry[];
   cms: CMSContent;
   roles: Role[];
   paymentMethods: PaymentMethod[];
   systemUsers: SystemUser[];
-  currentUser?: SystemUser; // Tracks simulated logged in user
+  currentUser?: SystemUser;
 }

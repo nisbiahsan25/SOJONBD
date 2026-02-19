@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../../store';
 import { Patient } from '../../types';
-import { Save, UserCircle, Phone, Heart, Hash, ShieldAlert, BedDouble, AlertCircle, Camera, Upload, X } from 'lucide-react';
+import { Save, UserCircle, Phone, Heart, Hash, ShieldAlert, BedDouble, AlertCircle, Camera, Upload, X, Clock, Wallet, CalendarDays } from 'lucide-react';
 
 interface Props {
   onSuccess: () => void;
@@ -26,7 +26,10 @@ const NewPatient: React.FC<Props> = ({ onSuccess }) => {
     emergencyContact: '',
     status: 'Active',
     recoveryProgress: 0,
-    photo: '' // Start with empty photo
+    photo: '',
+    contractDuration: '',
+    contractAmount: 0,
+    releaseDate: ''
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +59,6 @@ const NewPatient: React.FC<Props> = ({ onSuccess }) => {
     onSuccess();
   };
 
-  // Logic: Bed must be marked 'Available' AND no active patient should be currently assigned to it.
   const availableBeds = beds.filter(b => 
     b.status === 'Available' && 
     !patients.some(p => p.bedId === b.id && p.status === 'Active')
@@ -77,7 +79,6 @@ const NewPatient: React.FC<Props> = ({ onSuccess }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
-        {/* Photo Upload Section */}
         <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-200 rounded-[32px] bg-gray-50/50 hover:bg-gray-50 transition-colors">
           {formData.photo ? (
             <div className="relative">
@@ -157,7 +158,7 @@ const NewPatient: React.FC<Props> = ({ onSuccess }) => {
               <label className="block text-[11px] font-black text-gray-500 mb-3 uppercase tracking-widest">National ID (NID)</label>
               <input
                 required
-                placeholder="NID Number (e.g. 199012345678)"
+                placeholder="NID Number"
                 type="text"
                 className={inputClasses}
                 value={formData.nid}
@@ -165,16 +166,48 @@ const NewPatient: React.FC<Props> = ({ onSuccess }) => {
               />
             </div>
 
-            <div>
-              <label className="block text-[11px] font-black text-gray-500 mb-3 uppercase tracking-widest">Primary Guardian</label>
-              <input
-                required
-                placeholder="Parent/Spouse/Relative"
-                type="text"
-                className={inputClasses}
-                value={formData.guardian}
-                onChange={e => setFormData({ ...formData, guardian: e.target.value })}
-              />
+            <div className="bg-emerald-50/50 p-6 rounded-[32px] border-2 border-emerald-100 space-y-6">
+              <h4 className="text-[11px] font-black text-emerald-800 uppercase tracking-widest flex items-center gap-2">
+                <Clock size={16} /> চুক্তি সংক্রান্ত তথ্য (Contract Details)
+              </h4>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">মেয়াদের সময়কাল</label>
+                    <input
+                      placeholder="যেমন: ৬ মাস"
+                      className={`${inputClasses} py-3 text-base`}
+                      value={formData.contractDuration}
+                      onChange={e => setFormData({ ...formData, contractDuration: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">রিলিজের সম্ভাব্য তারিখ</label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        className={`${inputClasses} py-3 text-base pl-12`}
+                        value={formData.releaseDate}
+                        onChange={e => setFormData({ ...formData, releaseDate: e.target.value })}
+                      />
+                      <CalendarDays size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-green opacity-50" />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">চুক্তিবদ্ধ মোট টাকা (Total Amount)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      placeholder="যেমন: ২০০০০"
+                      className={`${inputClasses} py-3 text-base pl-12`}
+                      value={formData.contractAmount || ''}
+                      onChange={e => setFormData({ ...formData, contractAmount: parseInt(e.target.value) || 0 })}
+                    />
+                    <Wallet size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-green opacity-50" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -245,6 +278,18 @@ const NewPatient: React.FC<Props> = ({ onSuccess }) => {
                   <option key={doc.id} value={doc.name} className="text-gray-900">{doc.name} ({doc.role})</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-black text-gray-500 mb-3 uppercase tracking-widest">Primary Guardian</label>
+              <input
+                required
+                placeholder="Parent/Spouse/Relative"
+                type="text"
+                className={inputClasses}
+                value={formData.guardian}
+                onChange={e => setFormData({ ...formData, guardian: e.target.value })}
+              />
             </div>
           </div>
         </div>
